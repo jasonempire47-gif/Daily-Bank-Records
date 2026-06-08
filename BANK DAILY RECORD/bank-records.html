@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Daily Bank Records</title>
+
+  <style>
+    :root {
+      --bg: #070a13;
+      --card: #111827;
+      --gold: #d4af37;
+      --gold2: #ffdf75;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: rgba(255,255,255,0.12);
+      --danger: #ef4444;
+      --success: #22c55e;
+      --warning: #eab308;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1500px;
+      margin: auto;
+    }
+
+    h1, h2 {
+      color: var(--gold2);
+    }
+
+    small, label {
+      color: var(--muted);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .card,
+    .form-box,
+    .table-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .card strong {
+      font-size: 28px;
+      color: var(--gold2);
+    }
+
+    .editable-card-input {
+      width: 100%;
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--gold2);
+      background: transparent;
+      border: none;
+      padding: 0;
+      outline: none;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0b1220;
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    button {
+      border: none;
+      padding: 10px 13px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 2px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #000;
+    }
+
+    .btn-secondary {
+      background: #1f2937;
+      color: white;
+    }
+
+    .btn-active {
+      background: var(--success);
+      color: #031b0b;
+    }
+
+    .btn-standby {
+      background: var(--warning);
+      color: #1f1600;
+    }
+
+    .btn-blocked {
+      background: var(--danger);
+      color: white;
+    }
+
+    .actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .status-text {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .toolbar input {
+      max-width: 350px;
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1250px;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--gold2);
+      background: #0b1220;
+    }
+
+    td {
+      color: #e5e7eb;
+    }
+
+    .badge {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .active {
+      background: rgba(34,197,94,0.18);
+      color: #86efac;
+    }
+
+    .standby {
+      background: rgba(234,179,8,0.18);
+      color: #fde68a;
+    }
+
+    .blocked {
+      background: rgba(239,68,68,0.18);
+      color: #fca5a5;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <h1>Daily Bank Records</h1>
+    <small>Active, Standby, Blocked, Sewa, Agent and Google Sheet Sync</small>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Banks Opened Today</h3>
+        <input
+          type="number"
+          id="manualTodayOpened"
+          min="0"
+          value="0"
+          class="editable-card-input"
+          oninput="saveManualTodayOpened()"
+        />
+      </div>
+
+      <div class="card"><h3>Active Customer</h3><strong id="activeCount">0</strong></div>
+      <div class="card"><h3>Standby</h3><strong id="standbyCount">0</strong></div>
+      <div class="card"><h3>Blocked</h3><strong id="blockedCount">0</strong></div>
+      <div class="card"><h3>Sewa</h3><strong id="sewaCount">0</strong></div>
+      <div class="card"><h3>Agent</h3><strong id="agentCount">0</strong></div>
+      <div class="card"><h3>Total Accounts</h3><strong id="totalCount">0</strong></div>
+      <div class="card"><h3>Active %</h3><strong id="activePercent">0%</strong></div>
+      <div class="card"><h3>Agent %</h3><strong id="agentPercent">0%</strong></div>
+      <div class="card"><h3>Sewa %</h3><strong id="sewaPercent">0%</strong></div>
+    </div>
+
+    <div class="form-box">
+      <h2>Current Running Account Totals</h2>
+
+      <div class="form-grid">
+        <div>
+          <label>Existing Active Customer Accounts</label>
+          <input type="number" id="baseActive" min="0" value="0" oninput="saveBaseTotals()" />
+        </div>
+
+        <div>
+          <label>Existing Standby Accounts</label>
+          <input type="number" id="baseStandby" min="0" value="0" oninput="saveBaseTotals()" />
+        </div>
+
+        <div>
+          <label>Existing Blocked Accounts</label>
+          <input type="number" id="baseBlocked" min="0" value="0" oninput="saveBaseTotals()" />
+        </div>
+
+        <div>
+          <label>Existing Sewa Accounts</label>
+          <input type="number" id="baseSewa" min="0" value="0" oninput="saveBaseTotals()" />
+        </div>
+
+        <div>
+          <label>Existing Agent Accounts</label>
+          <input type="number" id="baseAgent" min="0" value="0" oninput="saveBaseTotals()" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-box">
+      <h2>Add New Bank Record</h2>
+
+      <form id="bankForm">
+        <div class="form-grid">
+          <div>
+            <label>Date</label>
+            <input type="date" id="recordDate" required />
+          </div>
+
+          <div>
+            <label>Bank Name</label>
+            <input type="text" id="bankName" placeholder="BSP, Kina, ANZ" required />
+          </div>
+
+          <div>
+            <label>Customer / Holder Name</label>
+            <input type="text" id="customerName" required />
+          </div>
+
+          <div>
+            <label>Account Number</label>
+            <input type="text" id="accountNumber" required />
+          </div>
+
+          <div>
+            <label>Account Type</label>
+            <select id="accountType" required>
+              <option value="Customer">Customer / Owner Account</option>
+              <option value="Sewa">Sewa Account</option>
+              <option value="Agent">Agent Account</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Status</label>
+            <select id="status" required>
+              <option value="Active">Active</option>
+              <option value="Standby">Standby</option>
+              <option value="Blocked">Blocked</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Opened By</label>
+            <input type="text" id="openedBy" />
+          </div>
+
+          <div>
+            <label>Remarks</label>
+            <textarea id="remarks"></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn-primary">Save New Record</button>
+          <button type="button" class="btn-secondary" onclick="exportCSV()">Export CSV</button>
+          <button type="button" class="btn-blocked" onclick="clearAllRecords()">Clear Local Records</button>
+        </div>
+
+        <div class="status-text" id="syncStatus">Google Sheet: Ready</div>
+      </form>
+    </div>
+
+    <div class="table-box">
+      <div class="toolbar">
+        <h2>Bank Records List</h2>
+        <input type="text" id="searchInput" placeholder="Search..." oninput="renderTable()" />
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Record ID</th>
+              <th>Date</th>
+              <th>Bank</th>
+              <th>Customer</th>
+              <th>Account No.</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Opened By</th>
+              <th>Remarks</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="recordsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const STORAGE_KEY = "dailyBankRecords";
+    const BASE_KEY = "bankBaseTotals";
+    const TODAY_OPENED_KEY = "manualTodayOpened";
+
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwj7fBRYqX_P3AfeNt7riCtffAX-etGXs0JMKlbVqrWBQjBr2ByHKgBsfndd9bKmVtp/exec";
+
+    let records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    let baseTotals = JSON.parse(localStorage.getItem(BASE_KEY)) || {
+      active: 0,
+      standby: 0,
+      blocked: 0,
+      sewa: 0,
+      agent: 0
+    };
+
+    document.getElementById("recordDate").valueAsDate = new Date();
+
+    document.getElementById("bankForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const record = {
+        recordId: "BR-" + Date.now(),
+        date: document.getElementById("recordDate").value,
+        bankName: document.getElementById("bankName").value.trim(),
+        customerName: document.getElementById("customerName").value.trim(),
+        accountNumber: document.getElementById("accountNumber").value.trim(),
+        accountType: document.getElementById("accountType").value,
+        status: document.getElementById("status").value,
+        openedBy: document.getElementById("openedBy").value.trim(),
+        remarks: document.getElementById("remarks").value.trim()
+      };
+
+      records.push(record);
+      saveRecords();
+      renderTable();
+      updateDashboard();
+      sendToGoogleSheet(record, "create");
+
+      this.reset();
+      document.getElementById("recordDate").valueAsDate = new Date();
+    });
+
+    function saveRecords() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function loadManualTodayOpened() {
+      const saved = localStorage.getItem(TODAY_OPENED_KEY) || "0";
+      document.getElementById("manualTodayOpened").value = saved;
+    }
+
+    function saveManualTodayOpened() {
+      localStorage.setItem(
+        TODAY_OPENED_KEY,
+        document.getElementById("manualTodayOpened").value || "0"
+      );
+    }
+
+    function loadBaseTotals() {
+      document.getElementById("baseActive").value = baseTotals.active || 0;
+      document.getElementById("baseStandby").value = baseTotals.standby || 0;
+      document.getElementById("baseBlocked").value = baseTotals.blocked || 0;
+      document.getElementById("baseSewa").value = baseTotals.sewa || 0;
+      document.getElementById("baseAgent").value = baseTotals.agent || 0;
+    }
+
+    function saveBaseTotals() {
+      baseTotals = {
+        active: Number(document.getElementById("baseActive").value) || 0,
+        standby: Number(document.getElementById("baseStandby").value) || 0,
+        blocked: Number(document.getElementById("baseBlocked").value) || 0,
+        sewa: Number(document.getElementById("baseSewa").value) || 0,
+        agent: Number(document.getElementById("baseAgent").value) || 0
+      };
+
+      localStorage.setItem(BASE_KEY, JSON.stringify(baseTotals));
+      updateDashboard();
+    }
+
+    function getPercent(value, total) {
+      return total === 0 ? "0%" : ((value / total) * 100).toFixed(1) + "%";
+    }
+
+    function updateDashboard() {
+      const active = baseTotals.active + records.filter(r =>
+        r.status === "Active" && r.accountType === "Customer"
+      ).length;
+
+      const standby = baseTotals.standby + records.filter(r =>
+        r.status === "Standby"
+      ).length;
+
+      const blocked = baseTotals.blocked + records.filter(r =>
+        r.status === "Blocked"
+      ).length;
+
+      const sewa = baseTotals.sewa + records.filter(r =>
+        r.accountType === "Sewa"
+      ).length;
+
+      const agent = baseTotals.agent + records.filter(r =>
+        r.accountType === "Agent"
+      ).length;
+
+      const total = active + standby + blocked + sewa + agent;
+
+      document.getElementById("activeCount").textContent = active;
+      document.getElementById("standbyCount").textContent = standby;
+      document.getElementById("blockedCount").textContent = blocked;
+      document.getElementById("sewaCount").textContent = sewa;
+      document.getElementById("agentCount").textContent = agent;
+      document.getElementById("totalCount").textContent = total;
+
+      document.getElementById("activePercent").textContent = getPercent(active, total);
+      document.getElementById("agentPercent").textContent = getPercent(agent, total);
+      document.getElementById("sewaPercent").textContent = getPercent(sewa, total);
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("recordsTable");
+      const search = document.getElementById("searchInput").value.toLowerCase();
+
+      const filtered = records.filter(r =>
+        Object.values(r).join(" ").toLowerCase().includes(search)
+      );
+
+      tbody.innerHTML = "";
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="10" style="text-align:center;color:#94a3b8;">
+              No records found
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(record => {
+        const badgeClass = record.status.toLowerCase();
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${record.recordId}</td>
+            <td>${record.date}</td>
+            <td>${record.bankName}</td>
+            <td>${record.customerName}</td>
+            <td>${record.accountNumber}</td>
+            <td>${record.accountType}</td>
+            <td><span class="badge ${badgeClass}">${record.status}</span></td>
+            <td>${record.openedBy || "-"}</td>
+            <td>${record.remarks || "-"}</td>
+            <td>
+              <button class="btn-active" onclick="changeStatus('${record.recordId}', 'Active')">Active</button>
+              <button class="btn-standby" onclick="changeStatus('${record.recordId}', 'Standby')">Standby</button>
+              <button class="btn-blocked" onclick="changeStatus('${record.recordId}', 'Blocked')">Blocked</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function changeStatus(recordId, newStatus) {
+      const record = records.find(r => r.recordId === recordId);
+      if (!record) return;
+
+      if (record.status === newStatus) {
+        document.getElementById("syncStatus").textContent = "Status already set to " + newStatus + ".";
+        return;
+      }
+
+      record.status = newStatus;
+
+      saveRecords();
+      renderTable();
+      updateDashboard();
+
+      sendToGoogleSheet(record, "updateStatus");
+
+      document.getElementById("syncStatus").textContent =
+        "Status changed to " + newStatus + ". Updating Google Sheet...";
+    }
+
+    function sendToGoogleSheet(record, action) {
+      const syncStatus = document.getElementById("syncStatus");
+
+      if (!GOOGLE_SHEET_WEB_APP_URL || GOOGLE_SHEET_WEB_APP_URL.includes("PASTE_YOUR")) {
+        syncStatus.textContent = "Google Sheet: Not connected.";
+        return;
+      }
+
+      const iframeName = "googleSheetFrame";
+
+      let iframe = document.getElementById(iframeName);
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.name = iframeName;
+        iframe.id = iframeName;
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+      }
+
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = GOOGLE_SHEET_WEB_APP_URL;
+      form.target = iframeName;
+      form.style.display = "none";
+
+      const fields = {
+        action: action,
+        recordId: record.recordId,
+        date: record.date,
+        bankName: record.bankName,
+        customerName: record.customerName,
+        accountNumber: record.accountNumber,
+        accountType: record.accountType,
+        status: record.status,
+        openedBy: record.openedBy,
+        remarks: record.remarks
+      };
+
+      Object.keys(fields).forEach(key => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = fields[key] || "";
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+
+      syncStatus.textContent =
+        action === "create"
+          ? "Google Sheet: New record submitted."
+          : "Google Sheet: Status update submitted.";
+    }
+
+    function clearAllRecords() {
+      if (!confirm("Clear local records only? Google Sheet will not be deleted.")) return;
+
+      records = [];
+      saveRecords();
+      renderTable();
+      updateDashboard();
+    }
+
+    function exportCSV() {
+      if (records.length === 0) {
+        alert("No records to export.");
+        return;
+      }
+
+      const headers = [
+        "Record ID",
+        "Date",
+        "Bank Name",
+        "Customer Name",
+        "Account Number",
+        "Account Type",
+        "Status",
+        "Opened By",
+        "Remarks"
+      ];
+
+      const rows = records.map(r => [
+        r.recordId,
+        r.date,
+        r.bankName,
+        r.customerName,
+        r.accountNumber,
+        r.accountType,
+        r.status,
+        r.openedBy,
+        r.remarks
+      ]);
+
+      const csv =
+        headers.join(",") + "\n" +
+        rows.map(row =>
+          row.map(value => `"${String(value || "").replace(/"/g, '""')}"`).join(",")
+        ).join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "daily-bank-records.csv";
+      a.click();
+
+      URL.revokeObjectURL(url);
+    }
+
+    loadBaseTotals();
+    loadManualTodayOpened();
+    renderTable();
+    updateDashboard();
+  </script>
+</body>
+</html>
